@@ -1,0 +1,151 @@
+function Get-XmlConfigDocument {
+    param(
+        [Parameter(Mandatory)]
+        [string]$Path
+    )
+
+    if (-not (Test-Path $Path)) {
+        throw "Config file not found: $Path"
+    }
+
+    $xml = New-Object System.Xml.XmlDocument
+    $xml.PreserveWhitespace = $true
+    $xml.Load($Path)
+
+    return $xml
+}
+function Get-XmlConfigValue {
+    param(
+        [Parameter(Mandatory)]
+        [string]$Path,
+
+        [Parameter(Mandatory)]
+        [string]$XPath,
+
+        [hashtable]$Namespaces
+    )
+
+    $xml = Get-XmlConfigDocument $Path
+    $nsMgr = New-XmlNamespaceManager -Xml $xml -Namespaces $Namespaces
+
+    $node = if ($nsMgr) {
+        $xml.SelectSingleNode($XPath, $nsMgr)
+    } else {
+        $xml.SelectSingleNode($XPath)
+    }
+
+    if (-not $node) {
+        throw "XPath not found: $XPath"
+    }
+
+    return $node.InnerText
+}
+function Set-XmlConfigValue {
+    param(
+        [Parameter(Mandatory)]
+        [string]$Path,
+
+        [Parameter(Mandatory)]
+        [string]$XPath,
+
+        [Parameter(Mandatory)]
+        [string]$Value,
+
+        [hashtable]$Namespaces,
+
+        [switch]$Backup
+    )
+
+    if ($Backup) {
+        Copy-Item $Path "$Path.bak" -Force
+    }
+
+    $xml = Get-XmlConfigDocument $Path
+    $nsMgr = New-XmlNamespaceManager -Xml $xml -Namespaces $Namespaces
+
+    $node = if ($nsMgr) {
+        $xml.SelectSingleNode($XPath, $nsMgr)
+    } else {
+        $xml.SelectSingleNode($XPath)
+    }
+
+    if (-not $node) {
+        throw "XPath not found: $XPath"
+    }
+
+    $node.InnerText = $Value
+    $xml.Save($Path)
+}
+function Add-XmlConfigNode {
+    param(
+        [Parameter(Mandatory)]
+        [string]$Path,
+
+        [Parameter(Mandatory)]
+        [string]$ParentXPath,
+
+        [Parameter(Mandatory)]
+        [string]$ElementName,
+
+        [hashtable]$Attributes,
+
+        [string]$InnerText,
+
+        [hashtable]$Namespaces
+    )
+
+    $xml = Get-XmlConfigDocument $Path
+    $nsMgr = New-XmlNamespaceManager -Xml $xml -Namespaces $Namespaces
+
+    $parent = if ($nsMgr) {
+        $xml.SelectSingleNode($ParentXPath, $nsMgr)
+    } else {
+        $xml.SelectSingleNode($ParentXPath)
+    }
+
+    if (-not $parent) {
+        throw "Parent XPath not found: $ParentXPath"
+    }
+
+    $newNode = $xml.CreateElement($ElementName)
+
+    if ($Attributes) {
+        foreach ($key in $Attributes.Keys) {
+            $newNode.SetAttribute($key, $Attributes[$key])
+        }
+    }
+
+    if ($InnerText) {
+        $newNode.InnerText = $InnerText
+    }
+
+    $parent.AppendChild($newNode) | Out-Null
+    $xml.Save($Path)
+}
+function Remove-XmlConfigNode {
+    param(
+        [Parameter(Mandatory)]
+        [string]$Path,
+
+        [Parameter(Mandatory)]
+        [string]$XPath,
+
+        [hashtable]$Namespaces
+    )
+
+    $xml = Get-XmlConfigDocument $Path
+    $nsMgr = New-XmlNamespaceManager -Xml $xml -Namespaces $Namespaces
+
+    $node = if ($nsMgr) {
+        $xml.SelectSingleNode($XPath, $nsMgr)
+    } else {
+        $xml.SelectSingleNode($XPath)
+    }
+
+    if (-not $node) {
+        throw "XPath not found: $XPath"
+    }
+
+    $node.ParentNode.RemoveChild($node) | Out-Null
+    $xml.Save($Path)
+}
