@@ -1,6 +1,6 @@
 # 1. Define your file paths
-$inputFile = "C:\dataload\ProjectDocs\CognosReports\db_schema.xml"
-$outputFolder = "C:\dataload\ProjectDocs\SQL\db_schema"
+$inputFile = "C:\Users\BrettTaylor\OneDrive - RPI Consultants\Documents\CognosReports\FCG_BereavementTest.xml"
+$outputFolder = "C:\Users\BrettTaylor\OneDrive - RPI Consultants\Documents\CognosReports\SQL\FCG_BereavementTest"
 
 # Create output folder if it doesn't exist
 if (!(Test-Path $outputFolder)) { New-Item -ItemType Directory -Path $outputFolder | Out-Null }
