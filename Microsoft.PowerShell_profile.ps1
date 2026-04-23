@@ -119,7 +119,7 @@ function Sync-Git {
 
 Set-Alias gs Sync-Git
 
-#personal token for GITHUB: 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
+
 
 
 ###################################################################
