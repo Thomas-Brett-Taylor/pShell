@@ -119,6 +119,7 @@ function Sync-Git {
 
 Set-Alias gs Sync-Git
 
+#adding a comment to prove that file is managed and in source control
 
 
 
