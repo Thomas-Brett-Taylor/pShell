@@ -42,7 +42,7 @@ if (-not (Test-Path $XmlFile)) {
 
 # Derive output name: manifest<filename>.txt
 $baseName = [System.IO.Path]::GetFileNameWithoutExtension($XmlFile)
-$OutputFile = "manifest$($baseName).txt"
+$OutputFile = "manifest_$($baseName).txt"
 
 # Clear previous report if it exists
 if (Test-Path $OutputFile) { Remove-Item $OutputFile }
