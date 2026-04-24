@@ -1,7 +1,44 @@
 ###################################################################
 #navigational shortcuts
-
 ###################################################################
+
+#identify all custom functions and aliases for easy navigation
+function Get-ProfileCommands {
+    <#
+    .SYNOPSIS
+        Reads the PowerShell profile and lists all defined functions and aliases.
+    #>
+    [CmdletBinding()]
+    param(
+        [string]$Path = $PROFILE
+    )
+
+    if (Test-Path $Path) {
+        $content = Get-Content $Path
+        
+        Write-Host "`n--- FUNCTIONS DEFINED IN PROFILE ---" -ForegroundColor Yellow
+        $content | Select-String -Pattern "^function\s+([^\s\(\{]+)" | ForEach-Object {
+            Write-Host " [f] " -NoNewline
+            Write-Host $_.Matches.Groups[1].Value -ForegroundColor Cyan
+        }
+
+        Write-Host "`n--- ALIAS MAPPINGS IN PROFILE ---" -ForegroundColor Yellow
+        $content | Select-String -Pattern "(?:Set-Alias|New-Alias)\s+(?:-Name\s+)?([^\s,-]+)\s+(?:-Value\s+)?([^\s,]+)" | ForEach-Object {
+            $alias  = $_.Matches.Groups[1].Value.Trim("'").Trim('"')
+            $target = $_.Matches.Groups[2].Value.Trim("'").Trim('"')
+            
+            Write-Host " [a] " -NoNewline
+            Write-Host "$alias".PadRight(10) -ForegroundColor Green -NoNewline
+            Write-Host " -> " -NoNewline
+            Write-Host $target -ForegroundColor White
+        }
+        Write-Host ""
+    }
+    else {
+        Write-Warning "Profile not found at $Path"
+    }
+}
+Set-Alias mystuff Get-ProfileCommands
 
 #just get directories lsd
 function Get-Directories {Get-ChildItem -Directory}
