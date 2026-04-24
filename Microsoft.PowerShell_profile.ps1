@@ -4,10 +4,6 @@
 
 #identify all custom functions and aliases for easy navigation
 function Get-ProfileCommands {
-    <#
-    .SYNOPSIS
-        Reads the PowerShell profile and lists all defined functions and aliases.
-    #>
     [CmdletBinding()]
     param(
         [string]$Path = $PROFILE
@@ -17,18 +13,20 @@ function Get-ProfileCommands {
         $content = Get-Content $Path
         
         Write-Host "`n--- FUNCTIONS DEFINED IN PROFILE ---" -ForegroundColor Yellow
-        $content | Select-String -Pattern "^function\s+([^\s\(\{]+)" | ForEach-Object {
+        # Updated Regex: Removed the line-start anchor (^) and improved capture group
+        $content | Select-String -Pattern "function\s+([a-zA-Z0-9_-]+)" | ForEach-Object {
             Write-Host " [f] " -NoNewline
             Write-Host $_.Matches.Groups[1].Value -ForegroundColor Cyan
         }
 
         Write-Host "`n--- ALIAS MAPPINGS IN PROFILE ---" -ForegroundColor Yellow
-        $content | Select-String -Pattern "(?:Set-Alias|New-Alias)\s+(?:-Name\s+)?([^\s,-]+)\s+(?:-Value\s+)?([^\s,]+)" | ForEach-Object {
-            $alias  = $_.Matches.Groups[1].Value.Trim("'").Trim('"')
-            $target = $_.Matches.Groups[2].Value.Trim("'").Trim('"')
+        # Simplified Alias Regex: Captures the two words following the Alias command
+        $content | Select-String -Pattern "(Set-Alias|New-Alias)\s+([^\s]+)\s+([^\s]+)" | ForEach-Object {
+            $alias  = $_.Matches.Groups[2].Value.Trim("'").Trim('"')
+            $target = $_.Matches.Groups[3].Value.Trim("'").Trim('"')
             
             Write-Host " [a] " -NoNewline
-            Write-Host "$alias".PadRight(10) -ForegroundColor Green -NoNewline
+            Write-Host "$alias".PadRight(15) -ForegroundColor Green -NoNewline
             Write-Host " -> " -NoNewline
             Write-Host $target -ForegroundColor White
         }
@@ -39,6 +37,19 @@ function Get-ProfileCommands {
     }
 }
 Set-Alias mystuff Get-ProfileCommands
+
+# quickly find repositories 
+function Get-Repositories {
+    # Define the folders you want to search
+$IncludeList = @("bin", "Documents", "IdeaProjects")
+
+Get-ChildItem -Path "C:\Users\BrettTaylor" -Directory -Force -ErrorAction SilentlyContinue | 
+    Where-Object { $_.Name -in $IncludeList } | 
+    Get-ChildItem -Filter ".git" -Recurse -Directory -Force -ErrorAction SilentlyContinue | 
+    Select-Object -ExpandProperty FullName | 
+    Tee-Object -FilePath "$HOME\GitRepoList.txt"
+}
+Set-Alias find-gits Get-Repositories
 
 #just get directories lsd
 function Get-Directories {Get-ChildItem -Directory}
